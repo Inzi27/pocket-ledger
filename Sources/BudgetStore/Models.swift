@@ -37,6 +37,7 @@ import BudgetCore
     public var payment: PaymentMethod { PaymentMethod(rawValue: paymentRaw) ?? .other }
     public var bank: Bank { Bank(rawValue: bankRaw) ?? .unknown }
     public var needsReview: Bool { !reviewReason.isEmpty }
+    public var isTombstone: Bool { isDeleted || source == "deleted" }
     public func markDeleted() {
         isDeleted = true; updatedAt = .now
         merchant = ""; notes = ""; accountSuffix = ""; amountPaise = 0; reviewReason = ""
@@ -154,7 +155,7 @@ public enum LedgerSchemaV3: VersionedSchema {
     /// A deletion wins over an offline duplicate so deleted imports cannot reappear.
     public static func entries(_ records: [LedgerEntry]) -> [LedgerEntry] {
         Dictionary(grouping: records, by: \.id).values.compactMap { group in
-            guard !group.contains(where: \.isDeleted) else { return nil }
+            guard !group.contains(where: \.isTombstone) else { return nil }
             return group.sorted {
                 $0.updatedAt == $1.updatedAt ? $0.recordID.uuidString < $1.recordID.uuidString : $0.updatedAt > $1.updatedAt
             }.first

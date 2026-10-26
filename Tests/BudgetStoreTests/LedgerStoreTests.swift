@@ -76,6 +76,9 @@ import BudgetCore
         XCTAssertEqual(LedgerProjection.entries([a, b]).first?.amountPaise, 200)
         a.isDeleted = true
         XCTAssertTrue(LedgerProjection.entries([a, b]).isEmpty)
+        a.isDeleted = false
+        a.source = "deleted"
+        XCTAssertTrue(LedgerProjection.entries([a, b]).isEmpty)
     }
     func testRefundAndTransferTotals() {
         let entries = [LedgerEntry(amountPaise: 10000, merchant: "Shop", date: received),

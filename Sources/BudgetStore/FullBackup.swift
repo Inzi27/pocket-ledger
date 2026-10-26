@@ -127,7 +127,7 @@ public struct BackupRestoreResult {
         var entryMapping: [String: String] = [:]
         func recoveredID(_ original: String) -> String {
             var id = original
-            while let group = entries[id], group.contains(where: \.isDeleted) {
+            while let group = entries[id], group.contains(where: \.isTombstone) {
                 id = "csv-restore:" + SHA256.hash(data: Data(id.utf8)).map { String(format: "%02x", $0) }.joined()
             }
             return id

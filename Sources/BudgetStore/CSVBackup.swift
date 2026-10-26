@@ -95,7 +95,7 @@ public enum CSVBackupError: Error, LocalizedError {
             let categoryTint = cell("category tint").isEmpty ? (categoryTemplate?.tint ?? "teal") : cell("category tint")
             let providedID = cell("ledger id")
             if providedID.isEmpty && existingEntries.contains(where: { entry in
-                !entry.isDeleted && abs(entry.date.timeIntervalSince(date)) < 1
+                !entry.isTombstone && abs(entry.date.timeIntervalSince(date)) < 1
                     && entry.amountPaise == amount && entry.merchant == cell("merchant")
                     && entry.kind == kind && entry.payment == payment && entry.bank == bank
                     && entry.accountSuffix == cell("account suffix") && entry.categoryID == categoryID
@@ -106,7 +106,7 @@ public enum CSVBackupError: Error, LocalizedError {
             }
             var stableID = providedID.isEmpty ? generatedEntryID(row) : providedID
             if let group = existingGroups[stableID] {
-                guard group.contains(where: \.isDeleted) else { duplicates += 1; continue }
+                guard group.contains(where: \.isTombstone) else { duplicates += 1; continue }
                 stableID = "csv-restore:" + digest(stableID)
                 guard seenIDs.insert(stableID).inserted else { duplicates += 1; continue }
                 restoredDeleted += 1
