@@ -1,0 +1,6 @@
+#include "Common.xcconfig"
+SWIFT_OPTIMIZATION_LEVEL = -O
+SWIFT_COMPILATION_MODE = wholemodule
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+LEDGER_CLOUD_ENABLED = NO
+CODE_SIGN_ENTITLEMENTS = App/Resources/Local.entitlements

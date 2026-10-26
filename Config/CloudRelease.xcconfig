@@ -1,0 +1,5 @@
+#include "Release.xcconfig"
+LEDGER_CLOUD_ENABLED = YES
+CODE_SIGN_ENTITLEMENTS = App/Resources/Cloud.entitlements
+LEDGER_CLOUD_ENVIRONMENT = Production
+LEDGER_APS_ENVIRONMENT = production

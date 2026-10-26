@@ -1,0 +1,5 @@
+#include "Debug.xcconfig"
+LEDGER_CLOUD_ENABLED = YES
+CODE_SIGN_ENTITLEMENTS = App/Resources/Cloud.entitlements
+LEDGER_CLOUD_ENVIRONMENT = Development
+LEDGER_APS_ENVIRONMENT = development
