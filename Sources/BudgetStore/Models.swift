@@ -161,11 +161,31 @@ public enum LedgerSchemaV3: VersionedSchema {
         }.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date }
     }
     public static func categories(_ records: [LedgerCategory]) -> [LedgerCategory] {
-        Dictionary(grouping: records, by: \.id).values.compactMap { group in
-            group.sorted {
-                $0.updatedAt == $1.updatedAt ? $0.recordID.uuidString < $1.recordID.uuidString : $0.updatedAt > $1.updatedAt
-            }.first
-        }.sorted { $0.order == $1.order ? $0.name < $1.name : $0.order < $1.order }
+        var latestByID: [String: LedgerCategory] = [:]
+        for record in records {
+            guard let current = latestByID[record.id] else {
+                latestByID[record.id] = record
+                continue
+            }
+
+            let recordComesFirst: Bool
+            if record.updatedAt == current.updatedAt {
+                recordComesFirst = record.recordID.uuidString < current.recordID.uuidString
+            } else {
+                recordComesFirst = record.updatedAt > current.updatedAt
+            }
+            if recordComesFirst {
+                latestByID[record.id] = record
+            }
+        }
+
+        let latestCategories: [LedgerCategory] = Array(latestByID.values)
+        return latestCategories.sorted { (left: LedgerCategory, right: LedgerCategory) in
+            if left.order == right.order {
+                return left.name < right.name
+            }
+            return left.order < right.order
+        }
     }
     public static func rules(_ records: [MerchantRule]) -> [MerchantRule] {
         Dictionary(grouping: records, by: \.merchantKey).values.compactMap { group in
