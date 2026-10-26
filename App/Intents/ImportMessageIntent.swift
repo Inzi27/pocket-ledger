@@ -21,7 +21,7 @@ struct ImportMessageIntent: AppIntent {
 
     @MainActor func perform() async throws -> some IntentResult & ReturnsValue<String> {
         let container = try AppRuntime.shared.requireContainer()
-        let outcome = try LedgerStore.importMessage(message, sender: sender, in: container.mainContext)
+        let outcome = try LedgerStore.importMessage(message, sender: sender, origin: "shortcut", in: container.mainContext)
         return .result(value: outcome.message)
     }
 }

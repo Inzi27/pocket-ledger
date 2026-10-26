@@ -43,19 +43,19 @@ struct ImportMessageView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    if !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        let outcome = importMessage()
-                        if case .duplicate = outcome {
-                            showAlert = true
-                            return
-                        }
+                    guard let outcome = importMessage() else { return }
+                    if case .saved = outcome {
+                        dismiss()
+                    } else {
+                        showAlert = true
                     }
-                    dismiss()
-                }
+                }.disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
         .onTapGesture {
+            #if os(iOS)
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            #endif
         }
         .alert("Import Status", isPresented: $showAlert) {
             Button("OK", role: .cancel) { }

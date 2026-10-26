@@ -13,6 +13,9 @@ struct OverviewView: View {
     @Query private var categoryRecords: [LedgerCategory]
     @Query private var budgetRecords: [MonthlyBudget]
     @State private var month = Date.now
+    @State private var pickingMonth = false
+    @AppStorage("lastFullBackup") private var lastBackup: Double = 0
+    @AppStorage("backupReminderEnabled") private var backupReminder = false
     @State private var adding = false
     @State private var importing = false
     @State private var editing: LedgerEntry?
@@ -38,7 +41,7 @@ struct OverviewView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                monthSelector
+                LedgerMonthSelector(month: $month, picking: $pickingMonth)
                 spendingCard
                 HStack(spacing: 12) {
                     Button { adding = true } label: {
@@ -47,6 +50,18 @@ struct OverviewView: View {
                     Button { importing = true } label: {
                         Label("Import SMS", systemImage: "text.bubble").font(.subheadline.bold()).frame(maxWidth: .infinity).padding(.vertical, 10)
                     }.buttonStyle(.bordered)
+                }
+                HStack {
+                    NavigationLink { PaymentAccountsView(initialMonth: month) } label: { Label("Cards & payments", systemImage: "creditcard") }
+                    Spacer()
+                    NavigationLink { ImportHistoryView() } label: { Label("Imports", systemImage: "clock.arrow.circlepath") }
+                }.font(.subheadline)
+                if backupReminder && Date.now.timeIntervalSince1970 - lastBackup >= 7 * 24 * 60 * 60 {
+                    NavigationLink { BackupSettingsView() } label: {
+                        Label(lastBackup == 0 ? "Create your first complete backup" : "Your weekly backup is due", systemImage: "externaldrive.badge.exclamationmark")
+                            .font(.subheadline).padding().frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.background, in: RoundedRectangle(cornerRadius: 16))
+                    }
                 }
                 if entries.isEmpty {
                     VStack(alignment: .leading, spacing: 14) {
@@ -99,7 +114,7 @@ struct OverviewView: View {
                         HStack {
                             Text("Recent activity").font(.title3.bold())
                             Spacer()
-                            NavigationLink("See all") { TransactionsView() }.font(.subheadline)
+                            NavigationLink("See all") { TransactionsView(initialMonth: month) }.font(.subheadline)
                         }
                         ForEach(Array(monthly.prefix(5))) { entry in
                             Button { editing = entry } label: {
@@ -118,15 +133,7 @@ struct OverviewView: View {
         .sheet(isPresented: $adding) { NavigationStack { EntryEditor() } }
         .sheet(isPresented: $importing) { NavigationStack { ImportMessageView() } }
         .sheet(item: $editing) { entry in NavigationStack { EntryEditor(entry: entry) } }
-    }
-
-    private var monthSelector: some View {
-        HStack {
-            Text(month, format: .dateTime.month(.wide).year()).font(.headline)
-            Spacer()
-            Button { moveMonth(-1) } label: { Image(systemName: "chevron.left").frame(width: 32, height: 32) }.accessibilityLabel("Previous month")
-            Button { moveMonth(1) } label: { Image(systemName: "chevron.right").frame(width: 32, height: 32) }.accessibilityLabel("Next month")
-        }
+        .sheet(isPresented: $pickingMonth) { MonthPickerSheet(month: $month) }
     }
 
     private var spendingCard: some View {
@@ -155,5 +162,4 @@ struct OverviewView: View {
             .background(LinearGradient(colors: [palette.heroStart, palette.gradientEnd], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 26))
     }
 
-    private func moveMonth(_ step: Int) { month = Calendar.current.date(byAdding: .month, value: step, to: month) ?? month }
 }

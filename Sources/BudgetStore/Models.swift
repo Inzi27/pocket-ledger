@@ -91,9 +91,10 @@ public enum LedgerSchemaV1: VersionedSchema {
 }
 
 public enum LedgerMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self] }
+    public static var schemas: [any VersionedSchema.Type] { [LedgerSchemaV1.self, LedgerSchemaV2.self, LedgerSchemaV3.self] }
     public static var stages: [MigrationStage] {
-        [MigrationStage.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self)]
+        [MigrationStage.lightweight(fromVersion: LedgerSchemaV1.self, toVersion: LedgerSchemaV2.self),
+         MigrationStage.lightweight(fromVersion: LedgerSchemaV2.self, toVersion: LedgerSchemaV3.self)]
     }
 }
 
@@ -102,7 +103,46 @@ public enum LedgerSchemaV2: VersionedSchema {
     public static var models: [any PersistentModel.Type] { [LedgerEntry.self, LedgerCategory.self, MerchantRule.self, MonthlyBudget.self] }
 }
 
+// New entities leave the existing transaction schema unchanged during migration.
+@Model public final class ImportActivity {
+    public var id: String = UUID().uuidString
+    public var date: Date = Date.now
+    public var origin: String = "paste"
+    public var status: String = "saved"
+    public var detail: String = ""
+    public var entryID: String = ""
+    public init(date: Date = .now, origin: String, status: String, detail: String, entryID: String = "") {
+        self.date = date; self.origin = origin; self.status = status; self.detail = detail; self.entryID = entryID
+    }
+}
+
+@Model public final class PaymentAccount {
+    public var recordID: UUID = UUID()
+    public var key: String = ""
+    public var nickname: String = ""
+    public var updatedAt: Date = Date.now
+    public init(key: String, nickname: String) { self.key = key; self.nickname = nickname }
+}
+
+public enum LedgerSchemaV3: VersionedSchema {
+    public static var versionIdentifier: Schema.Version { .init(3, 0, 0) }
+    public static var models: [any PersistentModel.Type] {
+        [LedgerEntry.self, LedgerCategory.self, MerchantRule.self, MonthlyBudget.self, ImportActivity.self, PaymentAccount.self]
+    }
+}
+
 @MainActor public enum LedgerProjection {
+    public static func accounts(_ records: [PaymentAccount]) -> [PaymentAccount] {
+        Dictionary(grouping: records, by: \.key).values.compactMap { group in
+            group.sorted {
+                $0.updatedAt == $1.updatedAt ? $0.recordID.uuidString < $1.recordID.uuidString : $0.updatedAt > $1.updatedAt
+            }.first
+        }.sorted { $0.key < $1.key }
+    }
+    public static func activities(_ records: [ImportActivity]) -> [ImportActivity] {
+        Dictionary(grouping: records, by: \.id).values.compactMap { $0.max { $0.date < $1.date } }
+            .sorted { $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date }
+    }
     public static func budgets(_ records: [MonthlyBudget]) -> [MonthlyBudget] {
         Dictionary(grouping: records, by: \.budgetKey).values.compactMap { group in
             let latest = group.sorted {

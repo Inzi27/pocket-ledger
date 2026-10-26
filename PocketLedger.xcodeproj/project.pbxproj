@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC0000000000000000000001 /* Sources/BudgetStore/LedgerNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000001 /* Sources/BudgetStore/LedgerNavigation.swift */; };
+		AC0000000000000000000002 /* Sources/BudgetStore/FullBackup.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000002 /* Sources/BudgetStore/FullBackup.swift */; };
+		AC0000000000000000000003 /* App/Views/DataToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000003 /* App/Views/DataToolsView.swift */; };
+		AC0000000000000000000004 /* App/Views/PaymentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000004 /* App/Views/PaymentViews.swift */; };
 		0167F908DE2AB835441C1C59 /* Sources/BudgetCore/MessageParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F3D862A2BC21918AFDC4ED /* Sources/BudgetCore/MessageParser.swift */; };
 		040A8AA6F35BDDF067B2B10F /* App/Views/TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2928FD0B943562DE09F341A /* App/Views/TransactionsView.swift */; };
 		11F89F6DEE28F0418D861093 /* App/Views/SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD6AD6124B9F8AC97F192DD /* App/Views/SettingsView.swift */; };
@@ -28,6 +32,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AB0000000000000000000001 /* Sources/BudgetStore/LedgerNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BudgetStore/LedgerNavigation.swift; sourceTree = SOURCE_ROOT; };
+		AB0000000000000000000002 /* Sources/BudgetStore/FullBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BudgetStore/FullBackup.swift; sourceTree = SOURCE_ROOT; };
+		AB0000000000000000000003 /* App/Views/DataToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Views/DataToolsView.swift; sourceTree = SOURCE_ROOT; };
+		AB0000000000000000000004 /* App/Views/PaymentViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Views/PaymentViews.swift; sourceTree = SOURCE_ROOT; };
 		0382131857F6DA4B8F278A09 /* App/Resources/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = App/Resources/Info.plist; sourceTree = SOURCE_ROOT; };
 		07A162E492BEA9C01F93BB9B /* Config/CloudRelease.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/CloudRelease.xcconfig; sourceTree = SOURCE_ROOT; };
 		12D27CD1336281DE587DCCC1 /* App/Intents/ImportMessageIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Intents/ImportMessageIntent.swift; sourceTree = SOURCE_ROOT; };
@@ -37,7 +45,6 @@
 		3ABE21346C44DF15345BFC4A /* App/PocketLedgerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PocketLedgerApp.swift; sourceTree = SOURCE_ROOT; };
 		3D70D3828DC5B110B4D87747 /* Sources/BudgetStore/Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BudgetStore/Models.swift; sourceTree = SOURCE_ROOT; };
 		424DD89AC8A76830122E2469 /* App/Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = App/Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
-		48DE7D5E13EBF752655B0DE0 /* App/Resources/Local.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App/Resources/Local.entitlements; sourceTree = SOURCE_ROOT; };
 		513804B2957FB72C4F7A17B1 /* Config/Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Release.xcconfig; sourceTree = SOURCE_ROOT; };
 		56F3D862A2BC21918AFDC4ED /* Sources/BudgetCore/MessageParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BudgetCore/MessageParser.swift; sourceTree = SOURCE_ROOT; };
 		6AD6AD6124B9F8AC97F192DD /* App/Views/SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Views/SettingsView.swift; sourceTree = SOURCE_ROOT; };
@@ -54,7 +61,6 @@
 		C63989A833C09D21025D7E84 /* Sources/BudgetCore/Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BudgetCore/Money.swift; sourceTree = SOURCE_ROOT; };
 		D9EDEC79C382984875FD1ED1 /* App/Views/SpendingChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Views/SpendingChart.swift; sourceTree = SOURCE_ROOT; };
 		DAB99E6511C6B6D6A660FE3C /* App/AppRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppRuntime.swift; sourceTree = SOURCE_ROOT; };
-		FE2BF8D07F0214A299220B05 /* App/Resources/Cloud.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App/Resources/Cloud.entitlements; sourceTree = SOURCE_ROOT; };
 		7FF73EA2B4F33272F386F149 /* Sources/BudgetStore/CSVBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BudgetStore/CSVBackup.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -84,6 +90,10 @@
 		790BF5B3F28E0C80B1C8F0E3 /* Application */ = {
 			isa = PBXGroup;
 			children = (
+				AB0000000000000000000001 /* Sources/BudgetStore/LedgerNavigation.swift */,
+				AB0000000000000000000002 /* Sources/BudgetStore/FullBackup.swift */,
+				AB0000000000000000000003 /* App/Views/DataToolsView.swift */,
+				AB0000000000000000000004 /* App/Views/PaymentViews.swift */,
 				DAB99E6511C6B6D6A660FE3C /* App/AppRuntime.swift */,
 				12D27CD1336281DE587DCCC1 /* App/Intents/ImportMessageIntent.swift */,
 				3ABE21346C44DF15345BFC4A /* App/PocketLedgerApp.swift */,
@@ -103,8 +113,6 @@
 				424DD89AC8A76830122E2469 /* App/Resources/Assets.xcassets */,
 				6CEB468D8795D500F75EC88F /* App/Resources/PrivacyInfo.xcprivacy */,
 				0382131857F6DA4B8F278A09 /* App/Resources/Info.plist */,
-				48DE7D5E13EBF752655B0DE0 /* App/Resources/Local.entitlements */,
-				FE2BF8D07F0214A299220B05 /* App/Resources/Cloud.entitlements */,
 			);
 			name = Application;
 			sourceTree = "<group>";
@@ -197,6 +205,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0000000000000000000001 /* Sources/BudgetStore/LedgerNavigation.swift in Sources */,
+				AC0000000000000000000002 /* Sources/BudgetStore/FullBackup.swift in Sources */,
+				AC0000000000000000000003 /* App/Views/DataToolsView.swift in Sources */,
+				AC0000000000000000000004 /* App/Views/PaymentViews.swift in Sources */,
 				7E5069E961CC67D729361DEB /* App/AppRuntime.swift in Sources */,
 				D017358A6D1361751CE36E05 /* App/Intents/ImportMessageIntent.swift in Sources */,
 				E7F3BF530A6609FB6435D803 /* App/PocketLedgerApp.swift in Sources */,

@@ -20,3 +20,16 @@ The automated workspace requires `OTHER_SWIFT_FLAGS=-disable-sandbox` for Xcode'
 The user-provided ICICI message has been parsed with the corrected merchant extraction and verified by a regression test. It imports as ₹209.00 for `RSP*SWIGGY PVT`, ICICI card ending 9003, transaction date 25-Oct-26, category Food. Re-import also repairs the specific older bad result where the card-block phone was stored as the merchant.
 
 Run `sh scripts/check.sh` to repeat the unsigned build and automated tests. Then follow [the device checklist](DEVICE_TESTS.md) for the remaining checks.
+# Latest verification — 26 October 2026
+
+`sh scripts/check.sh` passed after complete backup/restore, import activity, transaction date navigation, and card/payment views were implemented:
+
+- 53 XCTest cases passed: 31 parser/money tests and 22 storage/CSV/enhancement tests.
+- The nine new enhancement tests verify a complete backup round trip (including unused archived categories, rules, budgets, card nicknames, exact notes/review metadata, and activity), repeat restore after two deletion cycles with linked history, preserving existing edits, malformed backup rejection, import outcomes without raw SMS, explicit category-rule priority, date-range boundaries, card grouping, and migration/reopen of an existing V2 disk store into V3.
+- Project validation passed for all 20 source files/resources/schemes.
+- Unsigned generic iPhone Debug build succeeded with Xcode 27.1 / iOS 27.1 SDK.
+- Full check log: `.build/enhancements-final-check.log`. Final iPhone build after lookup optimizations: `.build/enhancements-ios-final.log`.
+
+Restored the Mac compile-check path by guarding UIKit and navigation-bar-only usage, supplying the macOS chart background, and importing BudgetCore in Settings. Existing sandbox CoreData notification/CoreSimulator diagnostics do not fail these local-store tests or the generic iPhone build. No physical-device UI, document picker, locked-phone Shortcut execution, or CloudKit runtime test was performed. No installed user ledger was modified.
+
+Earlier sections above are historical checkpoints.

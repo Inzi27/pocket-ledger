@@ -17,7 +17,7 @@ public enum ImportOutcome: Equatable, Sendable {
 
 @MainActor public enum LedgerStore {
     public static func makeContainer(url: URL? = nil, cloudContainer: String? = nil, inMemory: Bool = false) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: LedgerSchemaV2.self)
+        let schema = Schema(versionedSchema: LedgerSchemaV3.self)
         let database: ModelConfiguration.CloudKitDatabase = cloudContainer.map { .private($0) } ?? .none
         let config: ModelConfiguration
         if let url {
@@ -60,15 +60,38 @@ public enum ImportOutcome: Equatable, Sendable {
         do { try context.save() } catch { context.rollback(); throw error }
     }
 
-    public static func importMessage(_ message: String, sender: String = "", receivedAt: Date = .now, in context: ModelContext) throws -> ImportOutcome {
+    public static func importMessage(_ message: String, sender: String = "", receivedAt: Date = .now,
+                                     origin: String = "paste", in context: ModelContext) throws -> ImportOutcome {
+        do {
+            let (outcome, entryID) = try processMessage(message, sender: sender, receivedAt: receivedAt, in: context)
+            let status: String
+            switch outcome {
+            case .saved: status = "saved"
+            case .duplicate: status = "duplicate"
+            case .ignored: status = "ignored"
+            case .unrecognized: status = "unrecognized"
+            }
+            context.insert(ImportActivity(date: .now, origin: origin, status: status, detail: outcome.message, entryID: entryID))
+            try context.save()
+            return outcome
+        } catch {
+            context.rollback()
+            // A failed store may be unable to persist its own failure. Never hide the original error.
+            context.insert(ImportActivity(origin: origin, status: "failed", detail: "The import could not be saved. Try importing again."))
+            do { try context.save() } catch { context.rollback() }
+            throw error
+        }
+    }
+
+    private static func processMessage(_ message: String, sender: String, receivedAt: Date,
+                                       in context: ModelContext) throws -> (ImportOutcome, String) {
         switch MessageParser().parse(message, sender: sender, receivedAt: receivedAt) {
-        case .ignored(let reason): return .ignored(reason)
-        case .unrecognized(let reason): return .unrecognized(reason)
+        case .ignored(let reason): return (.ignored(reason), "")
+        case .unrecognized(let reason): return (.unrecognized(reason), "")
         case .transaction(let parsed):
             let id = "sms:" + parsed.fingerprint
             let descriptor = FetchDescriptor<LedgerEntry>(predicate: #Predicate { $0.id == id })
 
-            // 1. Handle duplication and "Auto-Repair" category
             let existingRecords = try context.fetch(descriptor)
             let isDuplicate = !existingRecords.isEmpty
 
@@ -76,25 +99,28 @@ public enum ImportOutcome: Equatable, Sendable {
             let rules = LedgerProjection.rules(try context.fetch(FetchDescriptor<MerchantRule>()))
             let merchantKey = MerchantCategory.normalized(parsed.merchant)
 
-            // 2. Determine the best category
-            var suggested = rules.first(where: { $0.merchantKey == merchantKey })?.categoryID
-            if suggested == nil {
-                suggested = MerchantCategory.suggested(for: parsed.merchant)
-            }
-            if suggested == nil || suggested == "other" {
+            let remembered = rules.first(where: { $0.merchantKey == merchantKey })?.categoryID
+            var suggested = remembered ?? MerchantCategory.suggested(for: parsed.merchant)
+            if remembered == nil && (suggested == nil || suggested == "other") {
                 suggested = MerchantCategory.suggested(for: message)
             }
 
             let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived }) ? (suggested ?? "other") : "other"
 
             if isDuplicate {
-                // If it's a duplicate but we found a better category, update it automatically
-                if let existing = existingRecords.first, !existing.isDeleted && existing.categoryID != categoryID {
-                    existing.categoryID = categoryID
-                    existing.updatedAt = .now
-                    try context.save()
+                // Repair only the known legacy parser error; never replace a user's category.
+                if !existingRecords.contains(where: \.isDeleted),
+                   let existing = LedgerProjection.entries(existingRecords).first,
+                   existing.source == "sms", isBadMerchant(existing.merchant), !isBadMerchant(parsed.merchant) {
+                    for record in existingRecords {
+                        record.merchant = parsed.merchant
+                        if record.categoryID == "other" { record.categoryID = categoryID }
+                        record.reviewReason = parsed.reviewReason
+                        record.updatedAt = .now
+                    }
+                    return (.saved(needsReview: parsed.needsReview), id)
                 }
-                return .duplicate
+                return (.duplicate, id)
             }
 
             let entry = LedgerEntry(id: id, amountPaise: parsed.amountPaise, merchant: parsed.merchant, date: parsed.date,
@@ -102,9 +128,17 @@ public enum ImportOutcome: Equatable, Sendable {
                                     accountSuffix: parsed.accountSuffix, categoryID: categoryID, source: "sms",
                                     reviewReason: parsed.reviewReason)
             context.insert(entry)
-            do { try context.save() } catch { context.rollback(); throw error }
-            return .saved(needsReview: parsed.needsReview)
+            return (.saved(needsReview: parsed.needsReview), id)
         }
+    }
+
+    public static func setNickname(_ nickname: String, for key: String, in context: ModelContext) throws {
+        let name = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty, name.count <= 40 else { return }
+        let matches = try context.fetch(FetchDescriptor<PaymentAccount>(predicate: #Predicate { $0.key == key }))
+        if matches.isEmpty { context.insert(PaymentAccount(key: key, nickname: name)) }
+        for match in matches { match.nickname = name; match.updatedAt = .now }
+        do { try context.save() } catch { context.rollback(); throw error }
     }
 
     public static func remember(merchant: String, categoryID: String, in context: ModelContext) throws {

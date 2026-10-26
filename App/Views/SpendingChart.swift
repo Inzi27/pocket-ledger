@@ -94,8 +94,16 @@ struct SpendingChart: View {
             }
         }
         .padding()
-        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
+        .background(chartBackground, in: RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
+    }
+
+    private var chartBackground: Color {
+        #if os(iOS)
+        Color(uiColor: .secondarySystemBackground)
+        #else
+        Color(nsColor: .controlBackgroundColor)
+        #endif
     }
 
     private func selectCategory(at value: Double) {
