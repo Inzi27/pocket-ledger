@@ -2,6 +2,9 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 import LocalAuthentication
+#if canImport(BudgetCore)
+import BudgetCore
+#endif
 #if canImport(BudgetStore)
 import BudgetStore
 #endif
@@ -47,6 +50,8 @@ struct SettingsView: View {
                 NavigationLink { MerchantRulesView() } label: { Label("Merchant rules", systemImage: "arrow.triangle.branch") }
                 NavigationLink { BudgetSettingsView() } label: { Label("Monthly category budgets", systemImage: "chart.bar.fill") }
                 NavigationLink { ShortcutSetupView() } label: { Label("Automatic imports", systemImage: "bolt") }
+                NavigationLink { ImportHistoryView() } label: { Label("Import activity", systemImage: "clock.arrow.circlepath") }
+                NavigationLink { PaymentAccountsView() } label: { Label("Cards & payments", systemImage: "creditcard") }
 
             }
             Section("Appearance") {
@@ -90,6 +95,7 @@ struct SettingsView: View {
                 NavigationLink("How your data is handled") { PrivacyView() }
             }
             Section("Your data") {
+                NavigationLink { BackupSettingsView() } label: { Label("Complete backup & restore", systemImage: "externaldrive") }
                 Button("Export transactions as CSV", systemImage: "square.and.arrow.up") {
                     exportDocument = CSVDocument(text: LedgerStore.csv(entries: records, categories: categories)); exporting = true
                 }
@@ -179,7 +185,7 @@ private struct BudgetSettingsView: View {
                             set: { drafts[category.id] = $0 }
                         )).amountKeyboard().accessibilityLabel("Monthly budget for \(category.name)")
                         Button("Save") { save(categoryID: category.id) }
-                            .disabled(drafts[category.id] == nil && saved == 0)
+                            .disabled(drafts[category.id] == nil)
                     }
                     if saved > 0 { Text("Current limit: \(Money.formatted(saved))").font(.caption).foregroundStyle(.secondary) }
                 }
@@ -191,7 +197,8 @@ private struct BudgetSettingsView: View {
     }
 
     private func save(categoryID: String) {
-        let text = (drafts[categoryID] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let draft = drafts[categoryID] else { return }
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         let amount = text.isEmpty || text.range(of: #"^0(?:\.0{1,2})?$"#, options: .regularExpression) != nil
             ? 0 : (Money.paise(from: text) ?? -1)
         guard amount >= 0 else { error = "Enter a valid INR budget, such as 12000 or 12000.50."; return }
@@ -238,7 +245,9 @@ private struct CSVImportPreviewSheet: View {
                 }
             }
             .navigationTitle("Review CSV")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

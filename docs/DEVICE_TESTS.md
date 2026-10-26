@@ -40,3 +40,14 @@ These checks require full Xcode and an iPhone running iOS 27. Cloud checks requi
 - Test signed-out iCloud, unavailable network, account restrictions, and storage/quota errors without losing local data.
 - Verify a fresh installation can restore records from the private database after sync. Keep an export before destructive testing.
 - If distributing via TestFlight, deploy the schema to Production and repeat with CloudRelease; development records are separate.
+# Usability enhancements — October 2026
+
+Use a test ledger or export existing data first. Updating via Xcode with the same bundle identifier should retain the existing ledger.
+
+1. In Settings → Complete backup & restore, export a JSON backup. Cancel an export first and confirm the last-export date is unchanged. After a successful export, confirm the timestamp updates. Turn on weekly in-app reminders.
+2. Restore the backup and confirm existing transactions are not duplicated. In a test ledger, delete one transaction and restore it; confirm its details and import-history link return. Repeat deletion/restoration. Restore onto a fresh test install and confirm renamed/default and unused/archived categories, merchant rules, budgets, payment nicknames, and import history.
+3. Paste a valid bank message, duplicate, OTP, and unknown format. Saved transactions close the sheet; other results remain visible with the input intact. Import activity shows each result and source. Run the existing Shortcut to confirm its timestamp and linked result. No historical or missed-automation events should be fabricated.
+4. Edit a saved import's category, reimport the original message, and confirm the edit remains. Open Review with a flagged transaction in an older month: it should appear under All time and match the badge.
+5. Select an older month on Overview, then See all and Cards & payments; each should preserve that month. Tap the month to jump across years. Check date ranges include transactions late on the Through date. Collapse/reopen the pie and confirm selection still toggles without removing other slices.
+6. Name a card, find it by nickname, filter by card/bank/UPI, and clear filters without changing dates. Card spending must exclude repayments/transfers and subtract refunds. Cards with identical last four digits at different banks remain distinct. Check compact/large Dynamic Type layouts.
+7. Open an existing monthly budget without editing: Save should be disabled. Editing then saving should retain the new amount; deliberately blanking the amount should remove that budget.
