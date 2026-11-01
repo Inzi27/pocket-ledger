@@ -34,7 +34,7 @@ struct EntryEditor: View {
     private var categories: [LedgerCategory] {
         LedgerProjection.categories(categoryRecords).filter {
             (!$0.isArchived || $0.id == categoryID) && CategoryTemplate.isAvailable($0.id, name: $0.name, for: kind)
-        }
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
     private var valid: Bool {
         Money.paise(from: amount) != nil && !merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

@@ -44,6 +44,7 @@ struct TransactionsView: View {
     private var selectedKind: TransactionKind { TransactionKind(rawValue: kindFilter) ?? .expense }
     private var categoryOptions: [LedgerCategory] {
         categories.filter { CategoryTemplate.isAvailable($0.id, name: $0.name, for: selectedKind) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
     private var entries: [LedgerEntry] { LedgerProjection.entries(records) }
     private var paymentGroups: [PaymentGroup] { PaymentGroup.groups(entries: entries, accounts: accountRecords) }
