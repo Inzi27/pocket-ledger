@@ -80,6 +80,18 @@ final class MessageParserTests: XCTestCase {
         let value = try transaction("Rs.500 spent on card XX1234 at CAFE on 24-10-2026", sender: "VM-HDFCBK")
         XCTAssertEqual(value.bank, .hdfc)
     }
+    func testSodexoFoodCardPurchaseIdentifiedFromMessageOrSender() throws {
+        for (message, sender) in [
+            ("INR 250 spent on Sodexo card XX1234 at CAFE.", ""),
+            ("INR 250 spent at CAFE.", "VM-SODEXO")
+        ] {
+            let value = try transaction(message, sender: sender)
+            XCTAssertEqual(value.bank, .sodexo)
+            XCTAssertEqual(value.payment, .card)
+            XCTAssertEqual(value.kind, .expense)
+            XCTAssertEqual(value.amountPaise, 25000)
+        }
+    }
     func testOTPIsIgnoredEvenWithAmountAndMerchant() {
         assertIgnored("OTP 987654 for INR 2000 purchase on HDFC card at AMAZON. Do not share.")
     }

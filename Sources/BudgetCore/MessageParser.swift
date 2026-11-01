@@ -39,8 +39,8 @@ public struct MessageParser: Sendable {
         }
 
         let combined = sender + " " + text
-        let bank: Bank = matches("HDFC", combined) ? .hdfc : matches("ICICI", combined) ? .icici : matches("AXIS", combined) ? .axis : .unknown
-        let payment: PaymentMethod = matches(#"\bUPI\b|UPI/|\bVPA\b|UPIRef"#, text) ? .upi : matches(#"\b(card|creditcard|visa|mastercard)\b"#, text) ? .card : .other
+        let bank: Bank = matches("SODEXO", combined) ? .sodexo : matches("HDFC", combined) ? .hdfc : matches("ICICI", combined) ? .icici : matches("AXIS", combined) ? .axis : .unknown
+        let payment: PaymentMethod = matches(#"\bUPI\b|UPI/|\bVPA\b|UPIRef"#, text) ? .upi : bank == .sodexo || matches(#"\b(card|creditcard|visa|mastercard)\b"#, text) ? .card : .other
         let refund = matches(#"\b(refunded|refund|reversed|reversal)\b"#, text)
         let billPayment = matches(#"(?:payment|pymt).{0,45}(?:received|credited).{0,35}(?:card)|(?:payment|paid).{0,30}(?:towards|for|to).{0,25}(?:credit\s*card|card bill)|(?:credit\s*card|card).{0,30}(?:payment|pymt).{0,30}(?:received|credited|successful)"#, text)
         let credited = matches(#"\b(credited|received|deposited)\b"#, text)

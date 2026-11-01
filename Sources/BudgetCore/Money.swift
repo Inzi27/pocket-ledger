@@ -36,7 +36,7 @@ public enum PaymentMethod: String, CaseIterable, Codable, Sendable {
 }
 
 public enum Bank: String, CaseIterable, Codable, Sendable {
-    case hdfc = "HDFC", icici = "ICICI", axis = "Axis", unknown = "Other"
+    case hdfc = "HDFC", icici = "ICICI", axis = "Axis", sodexo = "Sodexo", unknown = "Other"
 }
 
 public struct CategoryTemplate: Identifiable, Sendable {
