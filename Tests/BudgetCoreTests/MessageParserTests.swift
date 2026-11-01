@@ -164,4 +164,15 @@ final class MoneyTests: XCTestCase {
         XCTAssertEqual(MerchantCategory.suggested(for: "Amazon India"), "shopping")
         XCTAssertEqual(MerchantCategory.suggested(for: "Unknown Person"), "other")
     }
+    func testCategoryOptionsAreSpecificToIncomeAndExpense() {
+        XCTAssertTrue(CategoryTemplate.isAvailable("salary", for: .income))
+        XCTAssertTrue(CategoryTemplate.isAvailable("bank-deposit", for: .income))
+        XCTAssertFalse(CategoryTemplate.isAvailable("food", for: .income))
+        XCTAssertTrue(CategoryTemplate.isAvailable("internet", for: .expense))
+        XCTAssertTrue(CategoryTemplate.isAvailable("food", for: .expense))
+        XCTAssertFalse(CategoryTemplate.isAvailable("salary", for: .expense))
+        XCTAssertTrue(CategoryTemplate.isAvailable("business", for: .income))
+        XCTAssertTrue(CategoryTemplate.isAvailable("business", for: .expense))
+        XCTAssertTrue(CategoryTemplate.isAvailable("custom-category", for: .income))
+    }
 }

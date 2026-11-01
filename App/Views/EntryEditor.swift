@@ -26,7 +26,11 @@ struct EntryEditor: View {
     @State private var loaded = false
     @State private var error: String?
     @State private var newCategory = false
-    private var categories: [LedgerCategory] { LedgerProjection.categories(categoryRecords).filter { !$0.isArchived || $0.id == categoryID } }
+    private var categories: [LedgerCategory] {
+        LedgerProjection.categories(categoryRecords).filter {
+            (!$0.isArchived || $0.id == categoryID) && CategoryTemplate.isAvailable($0.id, for: kind)
+        }
+    }
     private var valid: Bool {
         Money.paise(from: amount) != nil && !merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && (suffix.isEmpty || (suffix.count == 4 && suffix.allSatisfy(\.isNumber)))
@@ -72,6 +76,11 @@ struct EntryEditor: View {
             ToolbarItem(placement: .confirmationAction) { Button("Save", action: save).fontWeight(.semibold).disabled(!valid) }
         }
         .onAppear(perform: populate)
+        .onChange(of: kind) { _, newKind in
+            if !CategoryTemplate.isAvailable(categoryID, for: newKind) {
+                categoryID = newKind == .income ? "salary" : "other"
+            }
+        }
         .sheet(isPresented: $newCategory) { NavigationStack { CategoryEditor(onSave: { categoryID = $0 }) } }
         .modifier(ErrorNotice(message: $error))
     }

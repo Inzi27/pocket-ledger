@@ -45,16 +45,41 @@ public struct CategoryTemplate: Identifiable, Sendable {
     public let symbol: String
     public let tint: String
     public static let defaults: [CategoryTemplate] = [
+        .init(id: "salary", name: "Salary", symbol: "banknote.fill", tint: "green"),
+        .init(id: "business", name: "Business", symbol: "briefcase.fill", tint: "blue"),
+        .init(id: "bank-deposit", name: "Bank Deposit", symbol: "building.columns.fill", tint: "teal"),
+        .init(id: "interest", name: "Interest", symbol: "percent", tint: "purple"),
         .init(id: "food", name: "Food & drinks", symbol: "fork.knife", tint: "orange"),
         .init(id: "groceries", name: "Groceries", symbol: "basket.fill", tint: "green"),
         .init(id: "transport", name: "Transport", symbol: "car.fill", tint: "blue"),
         .init(id: "shopping", name: "Shopping", symbol: "bag.fill", tint: "purple"),
         .init(id: "bills", name: "Bills & utilities", symbol: "bolt.fill", tint: "yellow"),
+        .init(id: "internet", name: "Internet", symbol: "wifi", tint: "blue"),
+        .init(id: "investment", name: "Investment", symbol: "chart.line.uptrend.xyaxis", tint: "indigo"),
+        .init(id: "telephone", name: "Telephone", symbol: "phone.fill", tint: "teal"),
+        .init(id: "personal-care", name: "Personal Care", symbol: "sparkles", tint: "pink"),
+        .init(id: "legal", name: "Legal", symbol: "scalemass.fill", tint: "gray"),
+        .init(id: "fuel", name: "Fuel", symbol: "fuelpump.fill", tint: "orange"),
         .init(id: "health", name: "Health", symbol: "heart.fill", tint: "pink"),
         .init(id: "entertainment", name: "Entertainment", symbol: "play.tv.fill", tint: "indigo"),
         .init(id: "travel", name: "Travel", symbol: "airplane", tint: "teal"),
         .init(id: "other", name: "Uncategorized", symbol: "square.grid.2x2.fill", tint: "gray")
     ]
+
+    private static let incomeIDs: Set<String> = ["salary", "business", "bank-deposit", "interest", "other"]
+    private static let expenseIDs: Set<String> = [
+        "food", "groceries", "transport", "shopping", "bills", "internet", "investment",
+        "business", "telephone", "personal-care", "legal", "fuel", "health", "entertainment", "travel", "other"
+    ]
+    private static let knownIDs = Set(defaults.map(\.id))
+
+    public static func isAvailable(_ categoryID: String, for kind: TransactionKind) -> Bool {
+        switch kind {
+        case .income: return incomeIDs.contains(categoryID) || !knownIDs.contains(categoryID)
+        case .expense, .refund: return expenseIDs.contains(categoryID) || !knownIDs.contains(categoryID)
+        case .transfer: return true
+        }
+    }
 }
 
 public enum MerchantCategory {
