@@ -62,6 +62,7 @@ public struct CategoryTemplate: Identifiable, Sendable {
         .init(id: "personal-care", name: "Personal Care", symbol: "sparkles", tint: "pink"),
         .init(id: "legal", name: "Legal", symbol: "scalemass.fill", tint: "gray"),
         .init(id: "fuel", name: "Fuel", symbol: "fuelpump.fill", tint: "orange"),
+        .init(id: "fatih", name: "Fatih", symbol: "tag.fill", tint: "teal"),
         .init(id: "health", name: "Health", symbol: "heart.fill", tint: "pink"),
         .init(id: "entertainment", name: "Entertainment", symbol: "play.tv.fill", tint: "indigo"),
         .init(id: "travel", name: "Travel", symbol: "airplane", tint: "teal"),
@@ -93,6 +94,7 @@ public struct CategoryTemplate: Identifiable, Sendable {
     }
 
     public static func isAvailable(_ categoryID: String, name: String? = nil, for kind: TransactionKind) -> Bool {
+        if categoryID == "fatih" { return kind == .expense }
         let normalizedName = name?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         // Also recognize categories created before these defaults were introduced.
         if categoryID == "other" || categoryID == "vehicle-maintenance"
