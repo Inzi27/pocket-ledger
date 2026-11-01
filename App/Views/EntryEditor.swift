@@ -32,9 +32,13 @@ struct EntryEditor: View {
         _categoryID = State(initialValue: entry?.categoryID ?? CategoryTemplate.defaultID(for: initialKind))
     }
     private var categories: [LedgerCategory] {
-        LedgerProjection.categories(categoryRecords).filter {
+        let matching = LedgerProjection.categories(categoryRecords).filter {
             (!$0.isArchived || $0.id == categoryID) && CategoryTemplate.isAvailable($0.id, name: $0.name, for: kind)
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        var seenNames = Set<String>()
+        return matching.filter {
+            seenNames.insert($0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()).inserted
+        }
     }
     private var valid: Bool {
         Money.paise(from: amount) != nil && !merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -55,7 +59,11 @@ struct EntryEditor: View {
                 }.padding(.vertical, 8)
                 TextField("Merchant or recipient", text: $merchant)
                 DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                Picker("Type", selection: $kind) { ForEach(TransactionKind.allCases, id: \.self) { Text($0.label).tag($0) } }
+                Picker("Type", selection: $kind) {
+                    ForEach(TransactionKind.allCases.sorted { $0.label.localizedStandardCompare($1.label) == .orderedAscending }, id: \.self) {
+                        Text($0.label).tag($0)
+                    }
+                }
             } footer: { Text("Refunds reduce spending. Income and transfers do not count as spending.") }
             Section("Category") {
                 Picker("Category", selection: $categoryID) { ForEach(categories) { Text($0.name).tag($0.id) } }

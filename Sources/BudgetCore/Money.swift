@@ -63,6 +63,7 @@ public struct CategoryTemplate: Identifiable, Sendable {
         .init(id: "legal", name: "Legal", symbol: "scalemass.fill", tint: "gray"),
         .init(id: "fuel", name: "Fuel", symbol: "fuelpump.fill", tint: "orange"),
         .init(id: "fatih", name: "Fatih", symbol: "tag.fill", tint: "teal"),
+        .init(id: "charity", name: "Charity", symbol: "heart.fill", tint: "pink"),
         .init(id: "health", name: "Health", symbol: "heart.fill", tint: "pink"),
         .init(id: "entertainment", name: "Entertainment", symbol: "play.tv.fill", tint: "indigo"),
         .init(id: "travel", name: "Travel", symbol: "airplane", tint: "teal"),
@@ -73,7 +74,7 @@ public struct CategoryTemplate: Identifiable, Sendable {
     private static let incomeIDs: Set<String> = ["salary", "business", "bank-deposit", "interest", "meal-card", "uncategorized"]
     private static let expenseIDs: Set<String> = [
         "food", "groceries", "transport", "shopping", "bills", "internet", "investment",
-        "business", "telephone", "personal-care", "legal", "fuel", "health", "entertainment", "travel", "other"
+        "business", "telephone", "personal-care", "legal", "fuel", "charity", "health", "entertainment", "travel", "other"
     ]
     private static let knownIDs = Set(defaults.map(\.id))
 

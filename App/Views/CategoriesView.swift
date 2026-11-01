@@ -92,7 +92,9 @@ struct CategoryEditor: View {
                         LabeledContent("Transaction type", value: transactionKind.label)
                     } else {
                         Picker("Transaction type", selection: $selectedKind) {
-                            ForEach(TransactionKind.allCases, id: \.self) { Text($0.label).tag($0) }
+                            ForEach(TransactionKind.allCases.sorted { $0.label.localizedStandardCompare($1.label) == .orderedAscending }, id: \.self) {
+                                Text($0.label).tag($0)
+                            }
                         }
                     }
                 } else if let kind = assignedKind {

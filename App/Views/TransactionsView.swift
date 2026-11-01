@@ -43,8 +43,12 @@ struct TransactionsView: View {
     private var categories: [LedgerCategory] { LedgerProjection.categories(categoryRecords) }
     private var selectedKind: TransactionKind { TransactionKind(rawValue: kindFilter) ?? .expense }
     private var categoryOptions: [LedgerCategory] {
-        categories.filter { CategoryTemplate.isAvailable($0.id, name: $0.name, for: selectedKind) }
+        let matching = categories.filter { CategoryTemplate.isAvailable($0.id, name: $0.name, for: selectedKind) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        var seenNames = Set<String>()
+        return matching.filter {
+            seenNames.insert($0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()).inserted
+        }
     }
     private var entries: [LedgerEntry] { LedgerProjection.entries(records) }
     private var paymentGroups: [PaymentGroup] { PaymentGroup.groups(entries: entries, accounts: accountRecords) }
@@ -73,7 +77,9 @@ struct TransactionsView: View {
         List {
             Section {
                 Picker("Transaction type", selection: $kindFilter) {
-                    ForEach(TransactionKind.allCases, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
+                    ForEach(TransactionKind.allCases.sorted { $0.label.localizedStandardCompare($1.label) == .orderedAscending }, id: \.rawValue) {
+                        Text($0.label).tag($0.rawValue)
+                    }
                 }.pickerStyle(.segmented)
                 Picker("Period", selection: $dateScope) {
                     ForEach(LedgerDateScope.allCases) { Text($0.rawValue).tag($0) }
