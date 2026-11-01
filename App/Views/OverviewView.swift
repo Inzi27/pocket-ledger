@@ -43,7 +43,11 @@ struct OverviewView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 LedgerMonthSelector(month: $month, picking: $pickingMonth)
-                spendingCard
+                NavigationLink {
+                    TransactionsView(initialMonth: month, initialKind: .expense)
+                } label: {
+                    spendingCard
+                }.buttonStyle(.plain)
                 NavigationLink {
                     TransactionsView(initialMonth: month, initialKind: .income)
                 } label: {
