@@ -26,6 +26,7 @@ struct OverviewView: View {
         return entries.filter { $0.date >= range.start && $0.date < range.end }
     }
     private var expenses: Int64 { monthly.filter { $0.kind == .expense }.reduce(0) { $0 + $1.amountPaise } }
+    private var income: Int64 { monthly.filter { $0.kind == .income }.reduce(0) { $0 + $1.amountPaise } }
     private var refunds: Int64 { monthly.filter { $0.kind == .refund }.reduce(0) { $0 + $1.amountPaise } }
     private var breakdown: [(category: LedgerCategory, amount: Int64)] {
         categories.map { category in
@@ -43,6 +44,21 @@ struct OverviewView: View {
             VStack(alignment: .leading, spacing: 24) {
                 LedgerMonthSelector(month: $month, picking: $pickingMonth)
                 spendingCard
+                NavigationLink {
+                    TransactionsView(initialMonth: month, initialKind: .income)
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("MONTHLY INCOME").font(.caption.weight(.semibold))
+                            Text(Money.formatted(income)).font(.title.bold()).monospacedDigit()
+                        }
+                        Spacer()
+                        Image(systemName: "arrow.down.left.circle.fill").font(.title)
+                    }
+                    .foregroundStyle(palette.accent)
+                    .padding(22).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.background, in: RoundedRectangle(cornerRadius: 22))
+                }.buttonStyle(.plain)
                 HStack(spacing: 12) {
                     Button { adding = true } label: {
                         Label("Add expense", systemImage: "plus").font(.subheadline.bold()).frame(maxWidth: .infinity).padding(.vertical, 10)
