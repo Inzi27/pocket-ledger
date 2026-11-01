@@ -73,11 +73,24 @@ public struct CategoryTemplate: Identifiable, Sendable {
     ]
     private static let knownIDs = Set(defaults.map(\.id))
 
+    // The type is part of a new custom category's stable identity, so CloudKit,
+    // CSV and complete backups preserve its mapping without a schema migration.
+    public static func customID(for kind: TransactionKind, identifier: String = UUID().uuidString) -> String {
+        "category:\(kind.rawValue):\(identifier)"
+    }
+
+    public static func customKind(for categoryID: String) -> TransactionKind? {
+        let parts = categoryID.split(separator: ":", maxSplits: 2)
+        guard parts.count == 3, parts[0] == "category" else { return nil }
+        return TransactionKind(rawValue: String(parts[1]))
+    }
+
     public static func isAvailable(_ categoryID: String, for kind: TransactionKind) -> Bool {
+        if let assigned = customKind(for: categoryID) { return assigned == kind }
         switch kind {
         case .income: return incomeIDs.contains(categoryID) || !knownIDs.contains(categoryID)
         case .expense, .refund: return expenseIDs.contains(categoryID) || !knownIDs.contains(categoryID)
-        case .transfer: return true
+        case .transfer: return categoryID == "other" || !knownIDs.contains(categoryID)
         }
     }
 }

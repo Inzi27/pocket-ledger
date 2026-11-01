@@ -53,6 +53,9 @@ struct CategoryEditor: View {
     @Environment(\.ledgerPalette) private var palette
     var category: LedgerCategory?
     var onSave: ((String) -> Void)?
+    var transactionKind: TransactionKind?
+    @State private var selectedKind = TransactionKind.expense
+    private var creationKind: TransactionKind { transactionKind ?? selectedKind }
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var records: [LedgerCategory]
@@ -66,13 +69,24 @@ struct CategoryEditor: View {
     private let colors = ["teal", "orange", "green", "blue", "purple", "yellow", "pink", "indigo", "gray"]
     private var cleanName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var duplicateName: Bool {
-        LedgerProjection.categories(records).contains { $0.id != category?.id && $0.name.caseInsensitiveCompare(cleanName) == .orderedSame }
+        LedgerProjection.categories(records).contains { $0.id != category?.id && CategoryTemplate.isAvailable($0.id, for: category.flatMap { CategoryTemplate.customKind(for: $0.id) } ?? creationKind) && $0.name.caseInsensitiveCompare(cleanName) == .orderedSame }
     }
     var body: some View {
         Form {
             Section {
                 HStack { Spacer(); CategoryIcon(symbol: symbol, tint: tint).scaleEffect(1.4).padding(20); Spacer() }
                 TextField("Category name", text: $name)
+                if category == nil {
+                    if let transactionKind {
+                        LabeledContent("Transaction type", value: transactionKind.label)
+                    } else {
+                        Picker("Transaction type", selection: $selectedKind) {
+                            ForEach(TransactionKind.allCases, id: \.self) { Text($0.label).tag($0) }
+                        }
+                    }
+                } else if let kind = category.flatMap({ CategoryTemplate.customKind(for: $0.id) }) {
+                    LabeledContent("Transaction type", value: kind.label)
+                }
                 if duplicateName { Text("A category with this name already exists.").font(.caption).foregroundStyle(.orange) }
             }
             Section("Icon") {
@@ -114,7 +128,7 @@ struct CategoryEditor: View {
     }
     private func save() {
         guard !cleanName.isEmpty, !duplicateName else { return }
-        let record = category ?? LedgerCategory(name: cleanName, order: (records.map(\.order).max() ?? 0) + 1)
+        let record = category ?? LedgerCategory(id: CategoryTemplate.customID(for: creationKind), name: cleanName, order: (records.map(\.order).max() ?? 0) + 1)
         if category == nil { context.insert(record) }
         record.name = cleanName; record.symbol = symbol; record.tint = tint; record.isArchived = archived; record.updatedAt = .now
         do { try context.save(); onSave?(record.id); dismiss() }

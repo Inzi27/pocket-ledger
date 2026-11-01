@@ -105,7 +105,7 @@ public enum ImportOutcome: Equatable, Sendable {
                 suggested = MerchantCategory.suggested(for: message)
             }
 
-            let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived }) ? suggested : "other"
+            let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived && CategoryTemplate.isAvailable($0.id, for: parsed.kind) }) ? suggested : "other"
 
             if isDuplicate {
                 // Repair only the known legacy parser error; never replace a user's category.

@@ -13,6 +13,36 @@ import BudgetCore
         return container
     }
 
+    func testCustomCategoryTypeSurvivesPersistenceAndBothBackups() throws {
+        let source = try store()
+        for kind in TransactionKind.allCases {
+            let id = CategoryTemplate.customID(for: kind)
+            source.mainContext.insert(LedgerCategory(id: id, name: "Custom \(kind.label)"))
+            source.mainContext.insert(LedgerEntry(amountPaise: 10000, merchant: "Example", date: date,
+                                                  kind: kind, categoryID: id))
+        }
+        try source.mainContext.save()
+        let fresh = ModelContext(source)
+        let records = try fresh.fetch(FetchDescriptor<LedgerEntry>())
+        let categories = try fresh.fetch(FetchDescriptor<LedgerCategory>())
+        let csv = LedgerStore.csv(entries: records, categories: categories)
+        let csvTarget = try store()
+        let preview = try CSVBackup.preview(csv, existingEntries: [], categories: [])
+        try CSVBackup.importTransactions(preview, in: csvTarget.mainContext)
+        let fullTarget = try store()
+        _ = try FullBackup.restore(FullBackup.decode(FullBackup.export(in: fresh)), in: fullTarget.mainContext)
+        for container in [source, csvTarget, fullTarget] {
+            let context = ModelContext(container)
+            let entries = try context.fetch(FetchDescriptor<LedgerEntry>())
+            XCTAssertEqual(entries.count, 4)
+            for entry in entries {
+                for kind in TransactionKind.allCases {
+                    XCTAssertEqual(CategoryTemplate.isAvailable(entry.categoryID, for: kind), entry.kind == kind)
+                }
+            }
+        }
+    }
+
     func testImportHistoryRecordsOutcomesAndPreservesManualCategory() throws {
         let container = try store(); let context = container.mainContext
         _ = try LedgerStore.importMessage(sms, receivedAt: date, origin: "shortcut", in: context)

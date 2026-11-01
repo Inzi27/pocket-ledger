@@ -81,7 +81,7 @@ struct EntryEditor: View {
                 categoryID = newKind == .income ? "salary" : "other"
             }
         }
-        .sheet(isPresented: $newCategory) { NavigationStack { CategoryEditor(onSave: { categoryID = $0 }) } }
+        .sheet(isPresented: $newCategory) { NavigationStack { CategoryEditor(onSave: { categoryID = $0 }, transactionKind: kind) } }
         .modifier(ErrorNotice(message: $error))
     }
     private func populate() {

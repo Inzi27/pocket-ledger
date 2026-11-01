@@ -88,7 +88,7 @@ public enum CSVBackupError: Error, LocalizedError {
             let categoryName = cell("category").isEmpty ? "Uncategorized" : cell("category")
             let providedCategoryID = cell("category id")
             let categoryID = providedCategoryID.isEmpty
-                ? (knownCategories.first { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame }?.id ?? generatedCategoryID(categoryName))
+                ? (knownCategories.first { $0.name.caseInsensitiveCompare(categoryName) == .orderedSame && CategoryTemplate.isAvailable($0.id, for: kind) }?.id ?? CategoryTemplate.customID(for: kind, identifier: generatedCategoryID(categoryName)))
                 : providedCategoryID
             let categoryTemplate = CategoryTemplate.defaults.first { $0.id == categoryID }
             let categorySymbol = cell("category symbol").isEmpty ? (categoryTemplate?.symbol ?? "tag.fill") : cell("category symbol")
