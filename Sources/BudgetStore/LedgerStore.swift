@@ -101,11 +101,11 @@ public enum ImportOutcome: Equatable, Sendable {
 
             let remembered = rules.first(where: { $0.merchantKey == merchantKey })?.categoryID
             var suggested = remembered ?? MerchantCategory.suggested(for: parsed.merchant)
-            if remembered == nil && (suggested == nil || suggested == "other") {
+            if remembered == nil && suggested == "other" {
                 suggested = MerchantCategory.suggested(for: message)
             }
 
-            let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived }) ? (suggested ?? "other") : "other"
+            let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived }) ? suggested : "other"
 
             if isDuplicate {
                 // Repair only the known legacy parser error; never replace a user's category.
