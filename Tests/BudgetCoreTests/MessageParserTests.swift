@@ -73,7 +73,7 @@ final class MessageParserTests: XCTestCase {
         XCTAssertEqual(value.bank, .icici)
         XCTAssertEqual(value.payment, .card)
         XCTAssertEqual(value.accountSuffix, "9003")
-        XCTAssertEqual(value.date, ISO8601DateFormatter().date(from: "2026-10-24T18:30:00Z")!)
+        XCTAssertEqual(value.date, now)
         XCTAssertFalse(value.needsReview)
     }
     func testSenderIdentifiesBank() throws {
@@ -133,9 +133,9 @@ final class MessageParserTests: XCTestCase {
         let b = try transaction("HDFC Card INR 320  spent\nat CAFE on 24-10-2026")
         XCTAssertEqual(a.fingerprint, b.fingerprint)
     }
-    func testIndianDateAndTime() throws {
+    func testSMSDateAndTimeAreIgnoredInFavorOfReceptionTime() throws {
         let value = try transaction("HDFC card INR 500 spent at CAFE on 24-10-2026 14:30:00.")
-        XCTAssertEqual(value.date, ISO8601DateFormatter().date(from: "2026-10-24T09:00:00Z")!)
+        XCTAssertEqual(value.date, now)
     }
     func testUndatedMessageUsesReceivedDate() throws {
         let value = try transaction("HDFC card INR 500 spent at CAFE.")

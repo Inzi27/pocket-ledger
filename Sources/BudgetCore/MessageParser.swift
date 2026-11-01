@@ -73,8 +73,9 @@ public struct MessageParser: Sendable {
 
         let suffix = capture(#"(?:card|a/c|acct|account)(?:\s*(?:no\.?|number|ending|end|xx|x|\*|with|in|:|-|\.)\s*)*([0-9]{4})(?!\d)"#, text) ?? ""
         let reference = capture(#"(?:UPI\s*(?:Ref(?:erence)?(?:\s*No)?|txn(?:\s*id)?)|RRN|UTR|Ref(?:erence)?\s*(?:No|ID)?|Txn\s*ID)\s*[.:#\-]?\s*([A-Z0-9]{8,40})\b"#, text)
-        let parsedDate = transactionDate(in: text, relativeTo: receivedAt)
-        let date = parsedDate ?? receivedAt
+        // Bank SMS timestamps are inconsistent and can describe the original
+        // transaction rather than when this message reached the user.
+        let date = receivedAt
         let candidates = captures(#"\b(?:at|to|towards|from|on)\s+(.+?)(?=\s+(?:at\b|to\b|from\b|on\b|using\b|via\b|with\b|thru\b|through\b|UPI\b|Ref\b|Txn\b|Avl\b|Available\b|Bal\b|Not\s+you\b|If\b|A/c\b)|[.;]|$)"#, text)
         var merchant = candidates.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: " .,:;-")) }.first {
             !$0.isEmpty && $0.count <= 100
@@ -91,10 +92,6 @@ public struct MessageParser: Sendable {
             // A debit SMS rarely proves whether a UPI recipient is your own account.
             reasons.append("Check whether this UPI payment is an expense or a transfer.")
         }
-        if parsedDate == nil && matches(#"\b(?:on|dated)\s+\d{1,4}[-/]\d"#, text) {
-            reasons.append("Message date was not recognized; received date was used.")
-        }
-
         let key: String
         if let reference {
             key = "ref|\(bank.rawValue)|\(reference.uppercased())|\(kind.rawValue)|\(amount)"
@@ -106,25 +103,6 @@ public struct MessageParser: Sendable {
         return .transaction(.init(amountPaise: amount, merchant: merchant, date: date, kind: kind,
                                   payment: payment, bank: bank, accountSuffix: suffix,
                                   fingerprint: fingerprint, reviewReason: reasons.joined(separator: " ")))
-    }
-
-    private func transactionDate(in text: String, relativeTo received: Date) -> Date? {
-        guard let raw = capture(#"\b(?:on|dated)\s+(\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?|\d{1,2}[-/](?:\d{1,2}|[A-Za-z]{3})[-/]\d{2,4}(?:\s+(?:at\s+)?\d{2}:\d{2}(?::\d{2})?)?)"#, text) else { return nil }
-        let normalized = raw.replacingOccurrences(of: " at ", with: " ")
-        let formats = ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd",
-                       "dd-MM-yyyy HH:mm:ss", "dd-MM-yyyy HH:mm", "dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm",
-                       "dd-MM-yy HH:mm:ss", "dd-MM-yy HH:mm", "dd/MM/yy HH:mm:ss", "dd/MM/yy HH:mm",
-                       "dd-MMM-yyyy", "dd-MMM-yy", "dd-MM-yyyy", "dd/MM/yyyy", "dd-MM-yy", "dd/MM/yy"]
-        for format in formats {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-            formatter.dateFormat = format
-            formatter.isLenient = false
-            if let date = formatter.date(from: normalized), date <= received.addingTimeInterval(86_400),
-               date > Date(timeIntervalSince1970: 946_684_800) { return date }
-        }
-        return nil
     }
 
     private static func dayKey(_ date: Date) -> String {
