@@ -119,6 +119,8 @@ import BudgetCore
         func date(_ day: Int, hour: Int = 0, month: Int = 10) -> Date {
             calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: hour))!
         }
+        XCTAssertTrue(LedgerDateScope.today.contains(date(25, hour: 8), month: date(1), start: date(1), end: date(31), calendar: calendar, today: date(25, hour: 23)))
+        XCTAssertFalse(LedgerDateScope.today.contains(date(24, hour: 23), month: date(1), start: date(1), end: date(31), calendar: calendar, today: date(25, hour: 1)))
         XCTAssertTrue(LedgerDateScope.custom.contains(date(25, hour: 23), month: date(1), start: date(24, hour: 12), end: date(25), calendar: calendar))
         XCTAssertFalse(LedgerDateScope.custom.contains(date(26), month: date(1), start: date(24), end: date(25), calendar: calendar))
         XCTAssertTrue(LedgerDateScope.month.contains(date(31, hour: 23), month: date(1), start: date(1), end: date(1), calendar: calendar))

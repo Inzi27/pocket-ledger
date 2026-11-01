@@ -4,11 +4,13 @@ import BudgetCore
 #endif
 
 public enum LedgerDateScope: String, CaseIterable, Identifiable {
-    case month = "Month", allTime = "All time", custom = "Date range"
+    case today = "Today", month = "Month", allTime = "All time", custom = "Date range"
     public var id: String { rawValue }
 
-    public func contains(_ date: Date, month: Date, start: Date, end: Date, calendar: Calendar = .current) -> Bool {
+    public func contains(_ date: Date, month: Date, start: Date, end: Date, calendar: Calendar = .current,
+                         today: Date = .now) -> Bool {
         switch self {
+        case .today: return calendar.isDate(date, equalTo: today, toGranularity: .day)
         case .allTime: return true
         case .month: return calendar.isDate(date, equalTo: month, toGranularity: .month)
         case .custom:
