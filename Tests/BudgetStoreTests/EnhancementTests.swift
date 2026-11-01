@@ -43,6 +43,28 @@ import BudgetCore
         }
     }
 
+    func testCategoryUpdatesPreserveExistingRecordsAndApplyTypeRestrictions() throws {
+        let container = try store()
+        let context = container.mainContext
+        let other = try XCTUnwrap(context.fetch(FetchDescriptor<LedgerCategory>()).first { $0.id == "other" })
+        other.name = "Uncategorized"
+        let oldVehicleID = CategoryTemplate.customID(for: .income)
+        context.insert(LedgerCategory(id: oldVehicleID, name: "Vehicle Maintenance"))
+        try context.save()
+        try LedgerStore.seedCategories(in: context)
+        let records = try ModelContext(container).fetch(FetchDescriptor<LedgerCategory>())
+        XCTAssertEqual(records.first { $0.id == "other" }?.name, "Others")
+        XCTAssertTrue(records.contains { $0.id == "meal-card" })
+        for kind in TransactionKind.allCases {
+            XCTAssertEqual(CategoryTemplate.isAvailable("other", for: kind), kind == .expense)
+            XCTAssertEqual(CategoryTemplate.isAvailable(oldVehicleID, name: "Vehicle Maintenance", for: kind), kind == .expense)
+            XCTAssertEqual(CategoryTemplate.isAvailable("vehicle-maintenance", for: kind), kind == .expense)
+            XCTAssertEqual(CategoryTemplate.isAvailable("meal-card", for: kind), kind == .income)
+            XCTAssertTrue(CategoryTemplate.isAvailable(CategoryTemplate.defaultID(for: kind), for: kind))
+        }
+        XCTAssertTrue(records.contains { $0.id == oldVehicleID })
+    }
+
     func testImportHistoryRecordsOutcomesAndPreservesManualCategory() throws {
         let container = try store(); let context = container.mainContext
         _ = try LedgerStore.importMessage(sms, receivedAt: date, origin: "shortcut", in: context)

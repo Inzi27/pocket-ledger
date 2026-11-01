@@ -43,7 +43,7 @@ struct TransactionsView: View {
     private var categories: [LedgerCategory] { LedgerProjection.categories(categoryRecords) }
     private var selectedKind: TransactionKind { TransactionKind(rawValue: kindFilter) ?? .expense }
     private var categoryOptions: [LedgerCategory] {
-        categories.filter { CategoryTemplate.isAvailable($0.id, for: selectedKind) }
+        categories.filter { CategoryTemplate.isAvailable($0.id, name: $0.name, for: selectedKind) }
     }
     private var entries: [LedgerEntry] { LedgerProjection.entries(records) }
     private var paymentGroups: [PaymentGroup] { PaymentGroup.groups(entries: entries, accounts: accountRecords) }

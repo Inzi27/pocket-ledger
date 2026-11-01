@@ -29,8 +29,18 @@ public enum ImportOutcome: Equatable, Sendable {
     }
 
     public static func seedCategories(in context: ModelContext) throws {
-        let ids = Set(try context.fetch(FetchDescriptor<LedgerCategory>()).map(\.id))
+        let records = try context.fetch(FetchDescriptor<LedgerCategory>())
+        for category in records {
+            let name = category.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            if (category.id == "other" && ["uncategorized", "other", "others"].contains(name)) || name == "others" {
+                category.name = "Others"
+            }
+        }
+        let ids = Set(records.map(\.id))
         for (index, template) in CategoryTemplate.defaults.enumerated() where !ids.contains(template.id) {
+            if template.id == "vehicle-maintenance", records.contains(where: {
+                $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "vehicle maintenance"
+            }) { continue }
             let category = LedgerCategory(id: template.id, name: template.name, symbol: template.symbol, tint: template.tint, order: index)
             category.updatedAt = Date(timeIntervalSince1970: 0)
             context.insert(category)
@@ -105,7 +115,7 @@ public enum ImportOutcome: Equatable, Sendable {
                 suggested = MerchantCategory.suggested(for: message)
             }
 
-            let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived && CategoryTemplate.isAvailable($0.id, for: parsed.kind) }) ? suggested : "other"
+            let categoryID = categories.contains(where: { $0.id == suggested && !$0.isArchived && CategoryTemplate.isAvailable($0.id, name: $0.name, for: parsed.kind) }) ? suggested : CategoryTemplate.defaultID(for: parsed.kind)
 
             if isDuplicate {
                 // Repair only the known legacy parser error; never replace a user's category.

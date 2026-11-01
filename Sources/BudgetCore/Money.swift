@@ -48,6 +48,8 @@ public struct CategoryTemplate: Identifiable, Sendable {
         .init(id: "salary", name: "Salary", symbol: "banknote.fill", tint: "green"),
         .init(id: "business", name: "Business", symbol: "briefcase.fill", tint: "blue"),
         .init(id: "bank-deposit", name: "Bank Deposit", symbol: "building.columns.fill", tint: "teal"),
+        .init(id: "meal-card", name: "Meal Card", symbol: "creditcard.fill", tint: "green"),
+        .init(id: "vehicle-maintenance", name: "Vehicle Maintenance", symbol: "wrench.and.screwdriver.fill", tint: "blue"),
         .init(id: "interest", name: "Interest", symbol: "percent", tint: "purple"),
         .init(id: "food", name: "Food & drinks", symbol: "fork.knife", tint: "orange"),
         .init(id: "groceries", name: "Groceries", symbol: "basket.fill", tint: "green"),
@@ -63,10 +65,11 @@ public struct CategoryTemplate: Identifiable, Sendable {
         .init(id: "health", name: "Health", symbol: "heart.fill", tint: "pink"),
         .init(id: "entertainment", name: "Entertainment", symbol: "play.tv.fill", tint: "indigo"),
         .init(id: "travel", name: "Travel", symbol: "airplane", tint: "teal"),
-        .init(id: "other", name: "Uncategorized", symbol: "square.grid.2x2.fill", tint: "gray")
+        .init(id: "uncategorized", name: "Uncategorized", symbol: "square.grid.2x2.fill", tint: "gray"),
+        .init(id: "other", name: "Others", symbol: "square.grid.2x2.fill", tint: "gray")
     ]
 
-    private static let incomeIDs: Set<String> = ["salary", "business", "bank-deposit", "interest", "other"]
+    private static let incomeIDs: Set<String> = ["salary", "business", "bank-deposit", "interest", "meal-card", "uncategorized"]
     private static let expenseIDs: Set<String> = [
         "food", "groceries", "transport", "shopping", "bills", "internet", "investment",
         "business", "telephone", "personal-care", "legal", "fuel", "health", "entertainment", "travel", "other"
@@ -85,12 +88,23 @@ public struct CategoryTemplate: Identifiable, Sendable {
         return TransactionKind(rawValue: String(parts[1]))
     }
 
-    public static func isAvailable(_ categoryID: String, for kind: TransactionKind) -> Bool {
+    public static func defaultID(for kind: TransactionKind) -> String {
+        kind == .expense ? "other" : "uncategorized"
+    }
+
+    public static func isAvailable(_ categoryID: String, name: String? = nil, for kind: TransactionKind) -> Bool {
+        let normalizedName = name?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        // Also recognize categories created before these defaults were introduced.
+        if categoryID == "other" || categoryID == "vehicle-maintenance"
+            || normalizedName == "others" || normalizedName == "vehicle maintenance" {
+            return kind == .expense
+        }
+        if categoryID == "uncategorized" { return kind != .expense }
         if let assigned = customKind(for: categoryID) { return assigned == kind }
         switch kind {
         case .income: return incomeIDs.contains(categoryID) || !knownIDs.contains(categoryID)
         case .expense, .refund: return expenseIDs.contains(categoryID) || !knownIDs.contains(categoryID)
-        case .transfer: return categoryID == "other" || !knownIDs.contains(categoryID)
+        case .transfer: return !knownIDs.contains(categoryID)
         }
     }
 }

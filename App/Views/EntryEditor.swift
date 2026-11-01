@@ -29,10 +29,11 @@ struct EntryEditor: View {
     init(entry: LedgerEntry? = nil, initialKind: TransactionKind = .expense) {
         self.entry = entry
         _kind = State(initialValue: entry?.kind ?? initialKind)
+        _categoryID = State(initialValue: entry?.categoryID ?? CategoryTemplate.defaultID(for: initialKind))
     }
     private var categories: [LedgerCategory] {
         LedgerProjection.categories(categoryRecords).filter {
-            (!$0.isArchived || $0.id == categoryID) && CategoryTemplate.isAvailable($0.id, for: kind)
+            (!$0.isArchived || $0.id == categoryID) && CategoryTemplate.isAvailable($0.id, name: $0.name, for: kind)
         }
     }
     private var valid: Bool {
@@ -81,8 +82,8 @@ struct EntryEditor: View {
         }
         .onAppear(perform: populate)
         .onChange(of: kind) { _, newKind in
-            if !CategoryTemplate.isAvailable(categoryID, for: newKind) {
-                categoryID = newKind == .income ? "salary" : "other"
+            if !categories.contains(where: { $0.id == categoryID }) {
+                categoryID = CategoryTemplate.defaultID(for: newKind)
             }
         }
         .sheet(isPresented: $newCategory) { NavigationStack { CategoryEditor(onSave: { categoryID = $0 }, transactionKind: kind) } }
@@ -94,6 +95,7 @@ struct EntryEditor: View {
         amount = Money.input(entry.amountPaise); merchant = entry.merchant; date = entry.date
         kind = entry.kind; payment = entry.payment; bank = entry.bank; suffix = entry.accountSuffix
         categoryID = entry.categoryID; notes = entry.notes
+        if !categories.contains(where: { $0.id == categoryID }) { categoryID = CategoryTemplate.defaultID(for: kind) }
     }
     private func save() {
         guard let paise = Money.paise(from: amount), valid else { return }
