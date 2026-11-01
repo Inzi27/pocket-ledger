@@ -14,7 +14,7 @@ struct TransactionsView: View {
     @Query private var categoryRecords: [LedgerCategory]
     @Query private var accountRecords: [PaymentAccount]
     @State private var search = ""
-    @State private var kindFilter = "all"
+    @State private var kindFilter = TransactionKind.expense.rawValue
     @State private var categoryFilter = "all"
     @State private var selectedMonth = Date.now
     @State private var dateScope = LedgerDateScope.month
@@ -30,7 +30,8 @@ struct TransactionsView: View {
     @State private var adding = false
     @State private var importing = false
     @State private var error: String?
-    init(reviewOnly: Bool = false, initialMonth: Date = .now, initialAccountKey: String = "") {
+    init(reviewOnly: Bool = false, initialMonth: Date = .now, initialAccountKey: String = "", initialKind: TransactionKind = .expense) {
+        _kindFilter = State(initialValue: initialKind.rawValue)
         self.reviewOnly = reviewOnly
         _selectedMonth = State(initialValue: initialMonth)
         _dateScope = State(initialValue: reviewOnly ? .allTime : .month)
@@ -40,9 +41,13 @@ struct TransactionsView: View {
         _rangeEnd = State(initialValue: range?.end.addingTimeInterval(-1) ?? initialMonth)
     }
     private var categories: [LedgerCategory] { LedgerProjection.categories(categoryRecords) }
+    private var selectedKind: TransactionKind { TransactionKind(rawValue: kindFilter) ?? .expense }
+    private var categoryOptions: [LedgerCategory] {
+        categories.filter { CategoryTemplate.isAvailable($0.id, for: selectedKind) }
+    }
     private var entries: [LedgerEntry] { LedgerProjection.entries(records) }
     private var paymentGroups: [PaymentGroup] { PaymentGroup.groups(entries: entries, accounts: accountRecords) }
-    private var hasFilters: Bool { kindFilter != "all" || categoryFilter != "all" || paymentFilter != "all" || bankFilter != "all" || !accountFilter.isEmpty || !search.isEmpty }
+    private var hasFilters: Bool { categoryFilter != "all" || paymentFilter != "all" || bankFilter != "all" || !accountFilter.isEmpty || !search.isEmpty }
     // Keep category selection out of the chart's data so every slice stays tappable.
     private var chartEntries: [LedgerEntry] {
         let categoryNames = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.name) })
@@ -50,7 +55,7 @@ struct TransactionsView: View {
         return entries.filter { entry in
             let inRange = dateScope.contains(entry.date, month: selectedMonth, start: rangeStart, end: rangeEnd)
             let key = PaymentGroup.key(for: entry)
-            return inRange && (!reviewOnly || entry.needsReview) && (kindFilter == "all" || entry.kindRaw == kindFilter)
+            return inRange && (!reviewOnly || entry.needsReview) && (entry.kindRaw == kindFilter)
             && (paymentFilter == "all" || entry.paymentRaw == paymentFilter)
             && (bankFilter == "all" || entry.bankRaw == bankFilter)
             && (accountFilter.isEmpty || key == accountFilter)
@@ -66,6 +71,9 @@ struct TransactionsView: View {
     var body: some View {
         List {
             Section {
+                Picker("Transaction type", selection: $kindFilter) {
+                    ForEach(TransactionKind.allCases, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
+                }.pickerStyle(.segmented)
                 Picker("Period", selection: $dateScope) {
                     ForEach(LedgerDateScope.allCases) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented)
@@ -82,11 +90,10 @@ struct TransactionsView: View {
                     if paymentFilter != "all" { Text(PaymentMethod(rawValue: paymentFilter)?.label ?? paymentFilter) }
                     if bankFilter != "all" { Text(bankFilter) }
                     if let category = categories.first(where: { $0.id == categoryFilter }) { Text(category.name) }
-                    if kindFilter != "all" { Text(TransactionKind(rawValue: kindFilter)?.label ?? kindFilter) }
                     Button("Clear filters", systemImage: "xmark.circle") { resetFilters() }
                 }.font(.subheadline)
             }
-            if !reviewOnly {
+            if !reviewOnly && selectedKind == .expense {
                 Section {
                     DisclosureGroup("Spending chart", isExpanded: $chartExpanded) {
                         SpendingChart(entries: chartEntries, categories: categories, selectedCategoryID: categoryFilter == "all" ? nil : categoryFilter) { categoryID in
@@ -137,7 +144,7 @@ struct TransactionsView: View {
                     HStack {
                         Text("\(filtered.count) transactions")
                         Spacer()
-                        Text("Spending \(Money.formatted(LedgerProjection.netSpending(filtered)))")
+                        Text("\(selectedKind.label) \(Money.formatted(filtered.reduce(Int64(0)) { $0 + $1.amountPaise }))")
                     }
                 }
             }
@@ -148,13 +155,9 @@ struct TransactionsView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
-                    Picker("Transaction type", selection: $kindFilter) {
-                        Text("All types").tag("all")
-                        ForEach(TransactionKind.allCases, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
-                    }
                     Picker("Category", selection: $categoryFilter) {
                         Text("All categories").tag("all")
-                        ForEach(categories) { Text($0.name).tag($0.id) }
+                        ForEach(categoryOptions) { Text($0.name).tag($0.id) }
                     }
                     Picker("Payment method", selection: $paymentFilter) {
                         Text("All methods").tag("all")
@@ -182,9 +185,10 @@ struct TransactionsView: View {
             }
         }
         .sheet(item: $editing) { entry in NavigationStack { EntryEditor(entry: entry) } }
-        .sheet(isPresented: $adding) { NavigationStack { EntryEditor() } }
+        .sheet(isPresented: $adding) { NavigationStack { EntryEditor(initialKind: selectedKind) } }
         .sheet(isPresented: $importing) { NavigationStack { ImportMessageView() } }
         .sheet(isPresented: $pickingMonth) { MonthPickerSheet(month: $selectedMonth) }
+        .onChange(of: kindFilter) { _, _ in categoryFilter = "all" }
         .onChange(of: rangeStart) { _, start in if rangeEnd < start { rangeEnd = start } }
         .alert("Delete transaction?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), presenting: deleting) { entry in
             Button("Cancel", role: .cancel) { deleting = nil }
@@ -202,6 +206,6 @@ struct TransactionsView: View {
         do { try context.save() } catch { context.rollback(); self.error = error.localizedDescription }
     }
     private func resetFilters() {
-        kindFilter = "all"; categoryFilter = "all"; paymentFilter = "all"; bankFilter = "all"; accountFilter = ""; search = ""
+        categoryFilter = "all"; paymentFilter = "all"; bankFilter = "all"; accountFilter = ""; search = ""
     }
 }

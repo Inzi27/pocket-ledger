@@ -26,6 +26,10 @@ struct EntryEditor: View {
     @State private var loaded = false
     @State private var error: String?
     @State private var newCategory = false
+    init(entry: LedgerEntry? = nil, initialKind: TransactionKind = .expense) {
+        self.entry = entry
+        _kind = State(initialValue: entry?.kind ?? initialKind)
+    }
     private var categories: [LedgerCategory] {
         LedgerProjection.categories(categoryRecords).filter {
             (!$0.isArchived || $0.id == categoryID) && CategoryTemplate.isAvailable($0.id, for: kind)
