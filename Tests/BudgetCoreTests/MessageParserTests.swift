@@ -47,6 +47,21 @@ final class MessageParserTests: XCTestCase {
         let value = try transaction("ICICI Bank: INR 250.00 debited from A/c XX1234 to SWIGGY on 24-10-2026. UPI Ref 629800000001.")
         XCTAssertEqual(value.merchant, "SWIGGY")
     }
+    func testICICIUPIDebitNamesCreditedRecipient() throws {
+        let messages: [(String, String, Int64)] = [
+            ("ICICI Bank Acct XX135 debited for Rs 500.00 on 06-Nov-26; MASJID AL NOOR credited. UPI:631053383841. Call 18002662 for dispute. SMS BLOCK 135 to 9215676766", "MASJID AL NOOR", 50000),
+            ("ICICI Bank Acct XX135 debited for Rs 350.00 on 06-Nov-26; UDUPI BHAVAN credited. UPI:631001866693. Call 18002662 for dispute. SMS BLOCK 135 to 9215676766.", "UDUPI BHAVAN", 35000)
+        ]
+        for (message, merchant, amount) in messages {
+            let value = try transaction(message)
+            XCTAssertEqual(value.merchant, merchant)
+            XCTAssertEqual(value.amountPaise, amount)
+            XCTAssertEqual(value.bank, .icici)
+            XCTAssertEqual(value.payment, .upi)
+            XCTAssertEqual(value.kind, .expense)
+            XCTAssertFalse(value.reviewReason.contains("Merchant was not identified"))
+        }
+    }
     func testRefundReducesExpenses() throws {
         let value = try transaction("Refund of INR 500.00 credited to HDFC Bank Credit Card XX1234 from AMAZON on 24-10-2026.")
         XCTAssertEqual(value.kind, .refund)

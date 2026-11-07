@@ -76,7 +76,11 @@ public struct MessageParser: Sendable {
         // Bank SMS timestamps are inconsistent and can describe the original
         // transaction rather than when this message reached the user.
         let date = receivedAt
-        let candidates = captures(#"\b(?:at|to|towards|from|on)\s+(.+?)(?=\s+(?:at\b|to\b|from\b|on\b|using\b|via\b|with\b|thru\b|through\b|UPI\b|Ref\b|Txn\b|Avl\b|Available\b|Bal\b|Not\s+you\b|If\b|A/c\b)|[.;]|$)"#, text)
+        // ICICI UPI debit alerts name the recipient in a separate clause:
+        // "... debited ...; MERCHANT credited. UPI:...".
+        let creditedRecipients = bank == .icici && payment == .upi && debit
+            ? captures(#";\s*([^;]+?)\s+credited(?=\s*(?:[.;]|$))"#, text) : []
+        let candidates = creditedRecipients + captures(#"\b(?:at|to|towards|from|on)\s+(.+?)(?=\s+(?:at\b|to\b|from\b|on\b|using\b|via\b|with\b|thru\b|through\b|UPI\b|Ref\b|Txn\b|Avl\b|Available\b|Bal\b|Not\s+you\b|If\b|A/c\b)|[.;]|$)"#, text)
         var merchant = candidates.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: " .,:;-")) }.first {
             !$0.isEmpty && $0.count <= 100
                 && !matches(#"^(?:your\b|a/c\b|account\b|card\b|INR\b|Rs\b|₹|\d{1,2}:)|(?:HDFC|ICICI|AXIS).{0,12}(?:Bank|Card)"#, $0)
